@@ -24,6 +24,7 @@ import com.couchbase.client.core.message.CouchbaseResponse;
 import com.couchbase.client.core.message.ResponseStatus;
 import com.couchbase.client.core.message.cluster.CloseBucketRequest;
 import com.couchbase.client.core.message.cluster.CloseBucketResponse;
+import com.couchbase.client.core.message.internal.PingReport;
 import com.couchbase.client.core.message.kv.AppendRequest;
 import com.couchbase.client.core.message.kv.AppendResponse;
 import com.couchbase.client.core.message.kv.CounterRequest;
@@ -53,6 +54,8 @@ import com.couchbase.client.core.message.search.SearchQueryRequest;
 import com.couchbase.client.core.message.search.SearchQueryResponse;
 import com.couchbase.client.core.message.view.ViewQueryRequest;
 import com.couchbase.client.core.message.view.ViewQueryResponse;
+import com.couchbase.client.core.service.ServiceType;
+import com.couchbase.client.core.utils.HealthPinger;
 import com.couchbase.client.deps.io.netty.buffer.ByteBuf;
 import com.couchbase.client.java.analytics.AnalyticsQuery;
 import com.couchbase.client.java.analytics.AnalyticsQueryExecutor;
@@ -85,6 +88,7 @@ import com.couchbase.client.java.query.Statement;
 import com.couchbase.client.java.query.core.N1qlQueryExecutor;
 import com.couchbase.client.java.repository.AsyncRepository;
 import com.couchbase.client.java.repository.CouchbaseAsyncRepository;
+import com.couchbase.client.java.repository.mapping.MappingMode;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.result.AsyncSearchQueryResult;
 import com.couchbase.client.java.search.result.impl.DefaultAsyncSearchQueryResult;
@@ -114,10 +118,12 @@ import com.couchbase.client.java.view.ViewQuery;
 import com.couchbase.client.java.view.ViewQueryResponseMapper;
 import com.couchbase.client.java.view.ViewRetryHandler;
 import rx.Observable;
+import rx.Single;
 import rx.Subscriber;
 import rx.functions.Func0;
 import rx.functions.Func1;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -239,6 +245,11 @@ public class CouchbaseAsyncBucket implements AsyncBucket {
     @Override
     public Observable<AsyncRepository> repository() {
         return Observable.just((AsyncRepository) new CouchbaseAsyncRepository(this));
+    }
+
+    @Override
+    public Observable<AsyncRepository> repository(MappingMode mappingMode) {
+        return Observable.just((AsyncRepository) new CouchbaseAsyncRepository(this, mappingMode));
     }
 
     @Override
@@ -2098,6 +2109,28 @@ public class CouchbaseAsyncBucket implements AsyncBucket {
     @Override
     public Observable<Integer> invalidateQueryCache() {
         return Observable.just(n1qlQueryExecutor.invalidateQueryCache());
+    }
+
+    @Override
+    public Single<PingReport> ping(String reportId, long timeout, TimeUnit timeUnit) {
+        return HealthPinger.ping(environment, bucket, password, core, reportId, timeout, timeUnit);
+    }
+
+    @Override
+    public Single<PingReport> ping(long timeout, TimeUnit timeUnit) {
+        return HealthPinger.ping(environment, bucket, password, core, null, timeout, timeUnit);
+    }
+
+    @Override
+    public Single<PingReport> ping(Collection<ServiceType> services, long timeout, TimeUnit timeUnit) {
+        return HealthPinger.ping(environment, bucket, password, core, null, timeout, timeUnit,
+          services.toArray(new ServiceType[services.size()]));
+    }
+
+    @Override
+    public Single<PingReport> ping(String reportId, Collection<ServiceType> services, long timeout, TimeUnit timeUnit) {
+        return HealthPinger.ping(environment, bucket, password, core, reportId, timeout, timeUnit,
+          services.toArray(new ServiceType[services.size()]));
     }
 
     /**

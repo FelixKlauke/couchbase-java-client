@@ -26,6 +26,7 @@ import com.couchbase.client.java.document.EntityDocument;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.repository.mapping.DefaultEntityConverter;
 import com.couchbase.client.java.repository.mapping.EntityConverter;
+import com.couchbase.client.java.repository.mapping.MappingMode;
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -37,8 +38,12 @@ public class CouchbaseAsyncRepository implements AsyncRepository {
     private final AsyncBucket bucket;
 
     public CouchbaseAsyncRepository(AsyncBucket bucket) {
+        this(bucket, MappingMode.PRIMITIVE);
+    }
+
+    public CouchbaseAsyncRepository(AsyncBucket bucket, MappingMode mappingMode) {
         this.bucket = bucket;
-        converter = new DefaultEntityConverter();
+        converter = mappingMode.getEntityConverter();
     }
 
     @Override

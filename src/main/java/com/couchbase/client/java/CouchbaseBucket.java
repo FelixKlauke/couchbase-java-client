@@ -15,11 +15,14 @@
  */
 package com.couchbase.client.java;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.couchbase.client.core.ClusterFacade;
+import com.couchbase.client.core.message.internal.PingReport;
+import com.couchbase.client.core.service.ServiceType;
 import com.couchbase.client.java.analytics.AnalyticsQuery;
 import com.couchbase.client.java.analytics.AnalyticsQueryExecutor;
 import com.couchbase.client.java.analytics.AnalyticsQueryResult;
@@ -40,6 +43,7 @@ import com.couchbase.client.java.query.Statement;
 import com.couchbase.client.java.query.core.N1qlQueryExecutor;
 import com.couchbase.client.java.repository.CouchbaseRepository;
 import com.couchbase.client.java.repository.Repository;
+import com.couchbase.client.java.repository.mapping.MappingMode;
 import com.couchbase.client.java.search.SearchQuery;
 import com.couchbase.client.java.search.result.SearchQueryResult;
 import com.couchbase.client.java.search.result.impl.DefaultSearchQueryResult;
@@ -111,6 +115,11 @@ public class CouchbaseBucket implements Bucket {
     @Override
     public CouchbaseEnvironment environment() {
         return environment;
+    }
+
+    @Override
+    public Repository repository(MappingMode mappingMode) {
+        return new CouchbaseRepository(this, environment, mappingMode);
     }
 
     @Override
@@ -1232,5 +1241,45 @@ public class CouchbaseBucket implements Bucket {
         return Blocking.blockForSingle(
             asyncBucket.invalidateQueryCache(), environment.managementTimeout(), TIMEOUT_UNIT
         );
+    }
+
+    @Override
+    public PingReport ping(String reportId, long timeout, TimeUnit timeUnit) {
+        return asyncBucket.ping(reportId, timeout, timeUnit).toBlocking().value();
+    }
+
+    @Override
+    public PingReport ping(long timeout, TimeUnit timeUnit) {
+        return asyncBucket.ping(timeout, timeUnit).toBlocking().value();
+    }
+
+    @Override
+    public PingReport ping(Collection<ServiceType> services, long timeout, TimeUnit timeUnit) {
+        return asyncBucket.ping(services, timeout, timeUnit).toBlocking().value();
+    }
+
+    @Override
+    public PingReport ping(String reportId, Collection<ServiceType> services, long timeout, TimeUnit timeUnit) {
+        return asyncBucket.ping(reportId, services, timeout, timeUnit).toBlocking().value();
+    }
+
+    @Override
+    public PingReport ping(String reportId) {
+        return ping(reportId, environment.managementTimeout(), TIMEOUT_UNIT);
+    }
+
+    @Override
+    public PingReport ping() {
+        return ping(environment.managementTimeout(), TIMEOUT_UNIT);
+    }
+
+    @Override
+    public PingReport ping(Collection<ServiceType> services) {
+        return ping(services, environment.managementTimeout(), TIMEOUT_UNIT);
+    }
+
+    @Override
+    public PingReport ping(String reportId, Collection<ServiceType> services) {
+        return ping(reportId, services, environment.managementTimeout(), TIMEOUT_UNIT);
     }
 }

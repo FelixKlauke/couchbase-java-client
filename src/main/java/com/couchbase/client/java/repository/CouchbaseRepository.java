@@ -17,12 +17,10 @@ package com.couchbase.client.java.repository;
 
 import com.couchbase.client.core.annotations.InterfaceAudience;
 import com.couchbase.client.core.annotations.InterfaceStability;
-import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.PersistTo;
-import com.couchbase.client.java.ReplicaMode;
-import com.couchbase.client.java.ReplicateTo;
+import com.couchbase.client.java.*;
 import com.couchbase.client.java.document.EntityDocument;
 import com.couchbase.client.java.env.CouchbaseEnvironment;
+import com.couchbase.client.java.repository.mapping.MappingMode;
 import com.couchbase.client.java.util.Blocking;
 
 import java.util.List;
@@ -38,8 +36,12 @@ public class CouchbaseRepository implements Repository {
     private final long timeout;
 
     public CouchbaseRepository(Bucket bucket, CouchbaseEnvironment environment) {
+        this(bucket, environment, MappingMode.PRIMITIVE);
+    }
+
+    public CouchbaseRepository(Bucket bucket, CouchbaseEnvironment environment, MappingMode mappingMode) {
         this.timeout = environment.kvTimeout();
-        this.asyncRepository = bucket.async().repository().toBlocking().single();
+        this.asyncRepository = bucket.async().repository(mappingMode).toBlocking().single();
     }
 
     @Override
